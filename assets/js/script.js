@@ -27,6 +27,10 @@ $(function () {
   // DOM Elements
 
   $(".searchButton").on("click", searchLocation);
+  $(".searchHistory button").on("click", function(event){
+    var cityName = $(event.target).text()
+    searchFromHistory(cityName)
+  })
 
 
 });
@@ -36,19 +40,16 @@ function searchLocation() {
   // var cityName = testCityName
   $(".searchBar").val("");
 
-  if (cityName) {
-    for (var i = 0; i < searchHistory.length; i++) {
-      if (searchHistory[i].name === cityName) {
-        getWeather(searchHistory[i].lat, searchHistory[i].lon);
-        return;
-      }
-    }
+  if (searchFromHistory(cityName) === true){
+    return
+  } else{
     getCoord(cityName);
   }
 }
 
 function getCoord(city) {
   //TO DO Add defensive programming check here?
+  if (city){
   var requestGeoUrl = new URL("http://api.openweathermap.org/geo/1.0/direct");
   requestGeoUrl.searchParams.append("q", city);
   requestGeoUrl.searchParams.append("appid", APIkey);
@@ -73,6 +74,7 @@ function getCoord(city) {
       localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
       getWeather(lat, lon);
     });
+  }
 }
 
 function getWeather(lat, lon) {
@@ -158,11 +160,7 @@ function presentData(days) {
     // Set humidity
     dayCards[i-1].querySelector(".humidity").textContent = humidityTracker;
     // Set icon
-    var iconCode = getMostFrequent(iconList)
-    var imageURL = "https://openweathermap.org/img/wn/" + iconCode + "@2x.png"
-    dayCards[i-1].querySelector("img").setAttribute("src", imageURL)
-
-
+    dayCards[i-1].querySelector("img").setAttribute("src", "https://openweathermap.org/img/wn/" + getMostFrequent(iconList)+ "@2x.png")
     // Set verbose weather
     // TO DO Apply correct capitalization
     dayCards[i-1].querySelector(".verbose-weather").textContent = getMostFrequent(descriptionList)
@@ -190,6 +188,16 @@ function getMostFrequent(list){
   }
 }
 
+function searchFromHistory(cityName) {
+  if (cityName) {
+    for (var i = 0; i < searchHistory.length; i++) {
+      if (searchHistory[i].name === cityName) {
+        getWeather(searchHistory[i].lat, searchHistory[i].lon);
+        return true
+      }
+    } return false
+  }
+}
 
 
 // STRETCH GOALS
@@ -198,6 +206,7 @@ function getMostFrequent(list){
 // Autofill suggestions
 // If rainy, show chance of rain
 // Make search button activate when you press enter
+// If two weather conditions are equally likely, show both?
 
 // LOAD PAGE
 // Check localStorage ✅
@@ -217,22 +226,21 @@ function getMostFrequent(list){
 // Add city to the search history✅
 // Create a button with the place name. Store lat and long as data attributes to avoid future geocoding API calls✅
 
-// USE A HISTORY BUTTON TO SEARCH
+// USE A HISTORY BUTTON TO SEARCH✅
 
-// STATS TO DISPLAY
+// STATS TO DISPLAY✅
 // Date✅
 // Convert UTC with DayJS✅
 // Temp hi✅
 // For loop through temperatures, update if higher✅
 // Temp low✅
 // For loop through temperatures, update if lower✅
-// Weather icon
-// Track how many of each kind of weather there is, and show whichever one has the most
-// If two weather conditions are equally likely, show both?
-// Verbose weather?
-// list.weather.description
+// Weather icon✅
+// Track how many of each kind of weather there is, and show whichever one has the most✅
+// Verbose weather?✅
+// list.weather.description✅
 // Humidity?✅
 // For loop through humidity, update if higher✅
 
-// DISPLAY TO USER
-// Calculate each value and assign it to the relevant text field
+// DISPLAY TO USER✅
+// Calculate each value and assign it to the relevant text field✅
