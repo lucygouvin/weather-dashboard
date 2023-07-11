@@ -20,46 +20,47 @@
         <div class="container">
             <div>Current Weather</div>
             <h2>5 Day Forecast</h2>
+            <p class="test-text"></p>
             <!-- Wrap 5 day forecast in a container for ease of arranging -->
             <div class="container fiveDayForecast">
-                <div>Card 1
+                <div class="dayCard day1">Card 1
                     <p>Date: <span class="date"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
-                    <span class="icon"> </span>
-                    <p class="verbose-weather"></p>
+                    <img class="icon">
+                    <p class="verbose-weather"> Test </p>
                     <p>Humidity: <span class="humidity"></span></p>
                 </div>
-                <div>Card 2
+                <div class="dayCard day2">Card 2
                     <p>Date: <span class="date"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
-                    <span class="icon"> </span>
-                    <p class="verbose-weather"></p>
+                    <img class="icon">
+                    <p class="verbose-weather"> </p>
                     <p>Humidity: <span class="humidity"></span></p>
                 </div>
-                <div>Card 3
+                <div class="dayCard day3">Card 3
                     <p>Date: <span class="date"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
-                    <span class="icon"> </span>
-                    <p class="verbose-weather"></p>
+                    <img class="icon">
+                    <p class="verbose-weather"> </p>
                     <p>Humidity: <span class="humidity"></span></p>
                 </div>
-                <div>Card 4
+                <div class="dayCard day4">Card 4
                     <p>Date: <span class="date"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
-                    <span class="icon"> </span>
-                    <p class="verbose-weather"></p>
+                    <img class="icon">
+                    <p class="verbose-weather"> </p>
                     <p>Humidity: <span class="humidity"></span></p>
                 </div>
-                <div>Card 5
+                <div class="dayCard day5">Card 5
                     <p>Date: <span class="date"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
-                    <span class="icon"> </span>
-                    <p class="verbose-weather"></p>
+                    <img class="icon">
+                    <p class="verbose-weather"> </p>
                     <p>Humidity: <span class="humidity"></span></p>
                 </div>
             </div>
@@ -78,6 +79,8 @@
     <!-- Link to DayJS -->
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.3/dayjs.min.js"
         integrity="sha256-iu/zLUB+QgISXBLCW/mcDi/rnf4m4uEDO0wauy76x7U=" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/dayjs@1.10.7/plugin/utc.js"></script>
+<script src="https://unpkg.com/dayjs@1.10.7/plugin/timezone.js"></script>
     <!-- Link to JavaScript -->
     <script src="assets/js/script.js"></script>
 </body>
