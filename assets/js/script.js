@@ -113,7 +113,8 @@ function getCurrentForecast(name, lat, lon){
                 "<img class='icon' src=" + iconURL +">" +
                 "</div>"+
                 "<div class='col'>"+  
-                "<p class='card-text fs-4'>Temp: " + data.main.temp + "</p>" +
+                "<p class='card-text fs-4'>Temp: " + Math.floor(data.main.temp) + "°F</p>" +
+                "<p class='card-text fs-4'>Wind Speed: " + Math.floor(data.wind.speed) + " mph</p>" +
                 "<p class='card-text fs-4'>Humidity: " +data.main.humidity + "%</p>" + "</div> </div> </div> </div>" + "<h3>5 Day Forecast</h3>"
             );
           });
@@ -163,31 +164,30 @@ function presentData(days) {
   // For each of the five days in the forecast, calculate the data
   for (var i = start; i <= start + 4; i++) {
     var date = dayjs.unix(days[i][1].dt).format("ddd, MMM D");
-    var highTracker = null;
-    var lowTracker = null;
+    var tempTracker = null;
+    var windTracker = null;
     var humidityTracker = null;
     var iconList = [];
     var descriptionList = [];
+
     // To calculate the data, do the following for each result in that day's forecast
     for (var j = 1; j < days[i].length; j++) {
-      // Update high and low temps
-      if (days[i][j].main.temp > highTracker || highTracker === null) {
-        highTracker = days[i][j].main.temp;
-      }
-      if (days[i][j].main.temp < lowTracker || lowTracker === null) {
-        lowTracker = days[i][j].main.temp;
-      }
-      // Update humidity. Show the user the highest expected humidity value for the day.
-      if (
-        days[i][j].main.humidity > humidityTracker || humidityTracker === null
-      ) {
-        humidityTracker = days[i][j].main.humidity;
-      }
+      //Sum temperatures
+      tempTracker += days[i][j].main.temp
+      //Sum humidities
+      humidityTracker += days[i][j].main.humidity
+      // Sum wind speeds
+      windTracker += days[i][j].wind.speed
       // Create an array of all the returned weather icons 
       iconList.push(days[i][j].weather[0].icon);
       // TCreate an array of all the returned weather descriptions
       descriptionList.push(days[i][j].weather[0].description);
     }
+
+    // Return averages by dividing the sum by the number of elements in the day
+    tempTracker = Math.floor(tempTracker/days[i].length)
+    humidityTracker = Math.floor(humidityTracker/days[i].length)
+    windTracker = Math.floor(windTracker/days[i].length)
 
     var iconURL =
       "https://openweathermap.org/img/wn/" + getMostFrequent(iconList) + ".png";
@@ -197,8 +197,8 @@ function presentData(days) {
       "<div class='text-bg-primary card rounded p-2 flex-fill'>" + "<p class='date card-title'>" + date + "</p>" +
         "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + getMostFrequent(descriptionList) + "</p>" +
         "<img class='icon w-25' src=" + iconURL + ">" +
-        "<p class='card-text'>Temp High: " + highTracker + "</p>" +
-        "<p class='card-text'>Temp Low: " + lowTracker + "</p>" +
+        "<p class='card-text'>Temp: " + tempTracker + "°F</p>" +
+        "<p class='card-text'>Wind speed: " + windTracker + " mph</p>" +
         "<p class='card-text'>Humidity: " + humidityTracker + "%</p>" +
         "</div>"
     );
