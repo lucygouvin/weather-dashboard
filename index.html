@@ -12,68 +12,74 @@
     <title>Weather Dashboard</title>
 </head>
 
+
 <body>
+    <nav class="navbar bg-body-tertiary navbar bg-primary">
+        <div class="container-fluid">
+            <p class="navbar-text mb-0 h1 text-center">Weather Dashboard</p>
+          </div></nav>
     <!-- Header -->
-    <header>Weather Dashboard</header>
-    <main>
+    <main class="d-flex flex-row-reverse">
         <!-- Container that shows the current weather, plus the five day forecast -->
-        <div class="container">
-            <div>Current Weather</div>
-            <h2>5 Day Forecast</h2>
-            <p class="test-text"></p>
+        <div class="container currentWeather">
             <!-- Wrap 5 day forecast in a container for ease of arranging -->
-            <div class="container fiveDayForecast">
-                <div class="dayCard day1">Card 1
-                    <p>Date: <span class="date"></span></p>
+            <div class="container fiveDayForecast d-flex flex-row">
+                <!-- <div class="dayCard day1 card">
+                    <p>Date: <span class="date card-title"></span></p>
+                    <p class="verbose-weather card-subtitle text-body-secondary"> </p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
                     <img class="icon">
-                    <p class="verbose-weather"> </p>
                     <p>Humidity: <span class="humidity"></span>%</p>
                 </div>
-                <div class="dayCard day2">Card 2
-                    <p>Date: <span class="date"></span></p>
+                <div class="dayCard day2 card">Card 2
+                    <p>Date: <span class="date card-title"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
                     <img class="icon">
-                    <p class="verbose-weather"> </p>
+                    <p class="verbose-weather card-subtitle text-body-secondary"> </p>
                     <p>Humidity: <span class="humidity"></span>%</p>
                 </div>
-                <div class="dayCard day3">Card 3
-                    <p>Date: <span class="date"></span></p>
+                <div class="dayCard day3 card">Card 3
+                    <p>Date: <span class="date card-title"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
                     <img class="icon">
-                    <p class="verbose-weather"> </p>
+                    <p class="verbose-weather card-subtitle text-body-secondary"> </p>
                     <p>Humidity: <span class="humidity"></span>%</p>
                 </div>
-                <div class="dayCard day4">Card 4
-                    <p>Date: <span class="date"></span></p>
+                <div class="dayCard day4 card">Card 4
+                    <p>Date: <span class="date card-title"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
                     <img class="icon">
-                    <p class="verbose-weather"> </p>
+                    <p class="verbose-weather card-subtitle text-body-secondary"> </p>
                     <p>Humidity: <span class="humidity"></span>%</p>
                 </div>
-                <div class="dayCard day5">Card 5
-                    <p>Date: <span class="date"></span></p>
+                <div class="dayCard day5 card">Card 5
+                    <p>Date: <span class="date card-title"></span></p>
                     <p>Temp High: <span class="high"> </span></p>
                     <p>Temp Low: <span class="low"> </span></p>
                     <img class="icon">
-                    <p class="verbose-weather"> </p>
+                    <p class="verbose-weather card-subtitle text-body-secondary"> </p>
                     <p>Humidity: <span class="humidity"></span>%</p>
-                </div>
+                </div> -->
             </div>
         </div>
+        <aside class ="col-3">
+            <h3>Search for a City</h3>
+            <div class="d-flex m-1">
+                <!-- Search bar and search history on the side of the main content -->
+                <input class="searchBar flex-grow-1 m-1 ">
+                <!-- <button class="searchButton">Search</button> -->
+                <button class="searchButton">Test</button>
+            </div>
+            <!-- Container for search history items, which will be dynamically created -->
+            <div class="container searchHistory d-flex flex-column"></div>
+        </aside>
     </main>
-    <!-- Search bar and search history on the side of the main content -->
-    <aside>
-        <h3>Search for a City</h3>
-        <input class="searchBar">
-        <button class="searchButton">Search</button>
-        <!-- Container for search history items, which will be dynamically created -->
-        <div class="container searchHistory"></div>
-    </aside>
+    
+    
     <!-- Link to jQuery Core -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <!-- Link to DayJS -->

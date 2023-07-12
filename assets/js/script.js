@@ -1,108 +1,157 @@
-// Testing Variables
-var testCityName = "Pittsburgh";
-// var testCityLat = "40.44";
-// var testCityLon = "-79.99";
-
-
 // API Key
 var APIkey = "262d8997c6aac855ba637daa6177913c";
-
-// dayjs.extend(window.dayjs_plugin_utc);
-// dayjs.extend(window.dayjs_plugin_timezone);
-
 
 // See if there is an existing search history object in localStorage
 var searchHistory = JSON.parse(localStorage.getItem("searchHistory"));
 // If not (searchHistory is null), set it equal to an empty array
-if (searchHistory === null) {
+if (!searchHistory) {
   searchHistory = [];
-}else{
-  for (var i = 0; i < searchHistory.length; i++){
-    makeHistoryButton(searchHistory[i].name)
+} else {
+  for (var i = 0; i < searchHistory.length; i++) {
+    makeHistoryButton(searchHistory[i].name);
   }
+  // var mostRecent =  searchHistory[searchHistory.length-1]
+  // getCurrentForecast(mostRecent.name, mostRecent.lat, mostRecent.lon)
+  // getWeather(mostRecent.lat, mostRecent.lon)
 }
+
+var searchHistoryButtons
 
 // Wait until all DOM elemnts are loaded
 $(function () {
-  // DOM Elements
-
-  $(".searchButton").on("click", searchLocation);
-  $(".searchHistory button").on("click", function(event){
-    var cityName = $(event.target).text()
-    searchFromHistory(cityName)
-  })
-
-
+  searchHistoryButtons = $(".searchHistory button")
+  // Click listeners
+  
+  $(".currentWeather").on("click", searchLocation);
+  $(".searchHistory button").on("click", function (event) {
+    var cityName = $(event.target).text();
+    searchFromHistory(cityName);
+    // TO DO: Update the history list when you search from a history button
+    // var index = searchHistory.indexOf(cityName)
+    // var latest = 
+    // searchHistory.splice(index,1)
+    // searchHistory
+  });
 });
+
 function searchLocation() {
   // TO DO fix capitalization check
+  console.log("clicked")
   var cityName = $(".searchBar").val().trim();
-  // var cityName = testCityName
   $(".searchBar").val("");
 
-  if (searchFromHistory(cityName) === true){
-    return
-  } else{
+  if (searchFromHistory(cityName)) {
+    return;
+  } else {
     getCoord(cityName);
   }
 }
 
 function getCoord(city) {
-  //TO DO Add defensive programming check here?
-  if (city){
-  var requestGeoUrl = new URL("http://api.openweathermap.org/geo/1.0/direct");
-  requestGeoUrl.searchParams.append("q", city);
-  requestGeoUrl.searchParams.append("appid", APIkey);
+  if (city) {
+    var requestGeoUrl = new URL("http://api.openweathermap.org/geo/1.0/direct");
+    requestGeoUrl.searchParams.append("q", city);
+    requestGeoUrl.searchParams.append("appid", APIkey);
 
-  console.log("running coord");
-
-  fetch(requestGeoUrl)
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      var lat = data[0].lat;
-      var lon = data[0].lon;
-      makeHistoryButton(data[0].name)
-      var locData = {
-        name: data[0].name,
-        state: data[0].state,
-        lat: lat,
-        lon: lon,
-      };
-      searchHistory.push(locData);
-      localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
-      getWeather(lat, lon);
-    });
+    console.log("running coord");
+    fetch(requestGeoUrl)
+      .then(function (response) {
+        if (response.ok){
+          response.json().then(function (data) {
+            var lat = data[0].lat;
+            var lon = data[0].lon;
+            makeHistoryButton(data[0].name);
+            $(".cityName").text(data[0].name)
+            var locData = {
+              name: data[0].name,
+              state: data[0].state,
+              lat: lat,
+              lon: lon,
+            };
+            searchHistory.unshift(locData);
+            localStorage.setItem("searchHistory", JSON.stringify(searchHistory.slice(0,10)));
+            getCurrentForecast(city, lat, lon)
+            getWeather(lat, lon);
+            
+          });
+        }else{
+          alert('Error: ' + response.statusText);
+        }
+         
+      })
+      
   }
 }
 
 function getWeather(lat, lon) {
-  //TO DO Add defensive programming check here?
-  console.log("running weather");
-  var requestWeatherUrl = new URL(
-    "http://api.openweathermap.org/data/2.5/forecast"
-  );
-  requestWeatherUrl.searchParams.append("lat", lat);
-  requestWeatherUrl.searchParams.append("lon", lon);
-  requestWeatherUrl.searchParams.append("units", "imperial")
-  requestWeatherUrl.searchParams.append("appid", APIkey);
-  fetch(requestWeatherUrl)
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      sortData(data.list);
-    });
+  if (lat && lon) {
+    console.log("running weather");
+    var requestWeatherUrl = new URL(
+      "http://api.openweathermap.org/data/2.5/forecast"
+    );
+    requestWeatherUrl.searchParams.append("lat", lat);
+    requestWeatherUrl.searchParams.append("lon", lon);
+    requestWeatherUrl.searchParams.append("units", "imperial");
+    requestWeatherUrl.searchParams.append("appid", APIkey);
+    fetch(requestWeatherUrl)
+      .then(function (response) {
+        if (response.ok){
+          response.json().then(function (data) {
+            sortData(data.list);
+          });
+        }else {
+          alert('Error: ' + response.statusText);
+        }
+      })
+  }
 }
 
-function makeHistoryButton(location){
-  var historyButton = $("<button>" + location + "</button>")
-  $(".searchHistory").prepend(historyButton)
+function getCurrentForecast(name, lat, lon){
+  if (lat && lon) {
+    var currentWeatherUrl = new URL(
+      "https://api.openweathermap.org/data/2.5/weather"
+    );
+    currentWeatherUrl.searchParams.append("lat", lat);
+    currentWeatherUrl.searchParams.append("lon", lon);
+    currentWeatherUrl.searchParams.append("units", "imperial");
+    currentWeatherUrl.searchParams.append("appid", APIkey);
+    // TO DO handle bad request response
+    fetch(currentWeatherUrl)
+      .then(function (response) {
+        if (response.ok){
+          response.json().then(function (data) {
+            console.log(data)
+            var iconURL =
+              "https://openweathermap.org/img/wn/" + data.weather[0].icon + ".png";
+            $(".currentWeather").prepend(
+              "<div class='border border-black border-2 rounded'>" +   
+              "<h2>" + name + "</h2>" +
+                "<p class='date card-title'>Date: " + dayjs().format("ddd, MMM D") + "</p>" +
+                "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + data.weather[0].description +"</p>" +
+                "<img class='icon w-25' src=" + iconURL +">" +
+                "<p class='card-text'>Temp: " + data.main.temp + "</p>" +
+                "<p class='card-text'>Humidity: " +data.main.humidity + "%</p>" + "</div> </div>" + "<h3>5 Day Forecast</h3>"
+            );
+          });
+        }else{
+          alert('Error: ' + response.statusText);
+        }
+      })
+  }
 }
 
-function sortData(forecast){
-  var today = dayjs().set('hour', 23).set('minute',59).set('second',59);
+function makeHistoryButton(location) {
+  var historyButton = $("<button class='btn btn-secondary m-1'>" + location + "</button>");
+  $(".searchHistory").prepend(historyButton);
+    // for (var i = searchHistoryButtons.length; i >10; i--){
+    //   searchHistoryButtons[i].remove()
+
+    // }
+  }
+
+function sortData(forecast) {
+  if (forecast){
+  var today = dayjs().set("hour", 23).set("minute", 59).set("second", 59);
   var days = [
     [], //today
     [], //day + 1
@@ -115,76 +164,89 @@ function sortData(forecast){
     // convert the unix code to local time
     var convertDay = dayjs.unix(forecast[i].dt);
     if (convertDay.$D === today.$D) {
-      days[0].push(forecast[i])
+      days[0].push(forecast[i]);
     } else {
-    var index = (convertDay.diff(today, "day"))+1;
-    days[index].push(forecast[i]);
+      var index = convertDay.diff(today, "day") + 1;
+      days[index].push(forecast[i]);
     }
   }
-  console.log(days)
-  presentData(days)
+  console.log(days);
+  presentData(days);
+}
 }
 
 function presentData(days) {
-  var dayCards = $(".dayCard");
-  for (var i = 1; i < days.length; i++) {
-    var highTracker = null
-    var lowTracker = null
-    var humidityTracker = null
-    var iconList = []
-    var descriptionList = []
+  // var dayCards = $(".dayCard");
+  var start
+  if (days[0].length >= 4){
+    console.log("today counts as first day")
+    start = 0
+  }else{
+    start = 1
+  }
+  console.log(start)
+  for (var i =start; i <= start+4; i++) {
+    console.log("for loop running")
+    var date = dayjs.unix(days[i][1].dt).format('ddd, MMM D');
+    var highTracker = null;
+    var lowTracker = null;
+    var humidityTracker = null;
+    var iconList = [];
+    var descriptionList = [];
 
     for (var j = 1; j < days[i].length; j++) {
       // Update high and low temps
       if (days[i][j].main.temp > highTracker || highTracker === null) {
-        highTracker = days[i][j].main.temp
-      } 
-      if (days[i][j].main.temp < lowTracker|| lowTracker === null) {
+        highTracker = days[i][j].main.temp;
+      }
+      if (days[i][j].main.temp < lowTracker || lowTracker === null) {
         lowTracker = days[i][j].main.temp;
       }
       // Update humidity
-      if (days[i][j].main.humidity > humidityTracker || humidityTracker === null) {
-        humidityTracker= days[i][j].main.humidity
+      if (
+        days[i][j].main.humidity > humidityTracker ||
+        humidityTracker === null
+      ) {
+        humidityTracker = days[i][j].main.humidity;
       }
       // Track icon
-      iconList.push(days[i][j].weather[0].icon)
+      iconList.push(days[i][j].weather[0].icon);
       // Track weather desciption
-      descriptionList.push(days[i][j].weather[0].description)
+      descriptionList.push(days[i][j].weather[0].description);
     }
-    // Set date
-    dayCards[i-1].querySelector(".date").textContent = dayjs.unix(days[i][1].dt).format("ddd, MMM D");
-    // Set high temp
-    dayCards[i-1].querySelector(".high").textContent = highTracker;
-    // Set low temp
-    dayCards[i-1].querySelector(".low").textContent = lowTracker;
-    // Set humidity
-    dayCards[i-1].querySelector(".humidity").textContent = humidityTracker;
-    // Set icon
-    dayCards[i-1].querySelector("img").setAttribute("src", "https://openweathermap.org/img/wn/" + getMostFrequent(iconList)+ "@2x.png")
-    // Set verbose weather
-    // TO DO Apply correct capitalization
-    dayCards[i-1].querySelector(".verbose-weather").textContent = getMostFrequent(descriptionList)
+
+    var iconURL = "https://openweathermap.org/img/wn/" + getMostFrequent(iconList) + ".png"
+
+
+    $(".fiveDayForecast").append("<div class='dayCard day1 card rounded mx-3 p-2 flex-fill'>"+
+                    "<p class='date card-title'>Date: " + date +"</p>"+
+                    "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + getMostFrequent(descriptionList) + "</p>"+
+                    "<img class='icon w-25' src="+ iconURL + ">"+
+                    "<p class='card-text'>Temp High: " + highTracker +"</p>"+
+                    "<p class='card-text'>Temp Low: " + lowTracker +"</p>"+
+                    "<p class='card-text'>Humidity: "+ humidityTracker +"%</p>"+
+                    "</div>")
   }
 }
-function getMostFrequent(list){
-  if(list){
-    var freqTracker = {}
-    var maxItem
-    var maxCount = 1
-    
-    for (var i=0; i<list.length; i++){
-      var item = list[i]
-      if(!freqTracker[item]){
-        freqTracker[item] = 1
-      }else{
-        freqTracker[item] ++
+function getMostFrequent(list) {
+  if (list) {
+    var freqTracker = {};
+    var maxItem;
+    var maxCount = 1;
+
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i];
+      if (!freqTracker[item]) {
+        freqTracker[item] = 1;
+      } else {
+        freqTracker[item]++;
       }
-      if (freqTracker[item]>maxCount){
-        maxCount = freqTracker[item]
-        maxItem = item 
+      if (freqTracker[item] > maxCount) {
+        maxCount = freqTracker[item];
+        maxItem = item;
       }
     }
-    return maxItem
+    return maxItem;
   }
 }
 
@@ -192,12 +254,17 @@ function searchFromHistory(cityName) {
   if (cityName) {
     for (var i = 0; i < searchHistory.length; i++) {
       if (searchHistory[i].name === cityName) {
+        getCurrentForecast(cityName, searchHistory[i].lat, searchHistory[i].lon)
         getWeather(searchHistory[i].lat, searchHistory[i].lon);
-        return true
+
+        return true;
       }
-    } return false
+    }
+    return false;
   }
 }
+
+
 
 
 // STRETCH GOALS
@@ -211,7 +278,7 @@ function searchFromHistory(cityName) {
 // LOAD PAGE
 // Check localStorage ✅
 // Populate search history✅
-// Use latest search to get the current weather and the five day forecast. Populate dynamically
+// Use latest search to get the current weather and the five day forecast. Populate dynamically✅
 
 // If there's no localStorage, show a message like "Search for a city"
 // Hide the forecast area
@@ -244,3 +311,18 @@ function searchFromHistory(cityName) {
 
 // DISPLAY TO USER✅
 // Calculate each value and assign it to the relevant text field✅
+
+// HANDLE A CASE WHERE THE USER CHECKS AT MIDNIGHT AND TODAY BASICALLY COUNTS AS THE FIRST DAY ✅
+
+// DELETE LONG LIST OF SEARCH HISTORY BUTTONS
+
+// Handle bad response request✅
+
+// Show current forecast✅
+
+// Finish styling
+
+// Cleanup pass
+
+// Readme
+
