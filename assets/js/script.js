@@ -1,45 +1,48 @@
 // API Key
 var APIkey = "262d8997c6aac855ba637daa6177913c";
 
-// See if there is an existing search history object in localStorage
-var searchHistory = JSON.parse(localStorage.getItem("searchHistory"));
-// If not (searchHistory is null), set it equal to an empty array
-if (!searchHistory) {
-  searchHistory = [];
-} else {
-  for (var i = 0; i < searchHistory.length; i++) {
-    makeHistoryButton(searchHistory[i].name);
-  }
-  // var mostRecent =  searchHistory[searchHistory.length-1]
-  // getCurrentForecast(mostRecent.name, mostRecent.lat, mostRecent.lon)
-  // getWeather(mostRecent.lat, mostRecent.lon)
-}
-
+// Declare globally as these will be used by several functions
 var searchHistoryButtons
+var searchHistory
 
-// Wait until all DOM elemnts are loaded
+// WAIT UNTIL ALL DOM ELEMENTS ARE LOADED
 $(function () {
-  searchHistoryButtons = $(".searchHistory button")
-  // Click listeners
+
+  // See if there is an existing searchHistory object in localStorage
+  searchHistory = JSON.parse(localStorage.getItem("searchHistory"));
+  // If not (searchHistory is null), set it equal to an empty array
+  if (!searchHistory) {
+    searchHistory = [];
+    // Display text to let user know what to do
+    $(".currentWeather").append("<h3 class='fw-light fst-italic text-center p-5'>Search a city to see weather forecast.</h3>")
+  } else {
+    // Make a button for the items in searchHistory
+    for (var i = searchHistory.length-1; i >= 0; i--) {
+      makeHistoryButton(searchHistory[i].name);
+    }
+    // Automatically populate the current forecast and 5 day forecast areas with the most recent searched place
+    var mostRecent =  searchHistory[0]
+    getCurrentForecast(mostRecent.name, mostRecent.lat, mostRecent.lon)
+    getWeather(mostRecent.lat, mostRecent.lon)
+  }
+
+  searchHistoryButtons = $(".searchHistory button");
   
-  $(".currentWeather").on("click", searchLocation);
-  $(".searchHistory button").on("click", function (event) {
+  // Click listeners
+  $(".searchButton").on("click", searchLocation);
+  $(".searchHistory").on("click", "button", function (event) {
     var cityName = $(event.target).text();
     searchFromHistory(cityName);
-    // TO DO: Update the history list when you search from a history button
-    // var index = searchHistory.indexOf(cityName)
-    // var latest = 
-    // searchHistory.splice(index,1)
-    // searchHistory
   });
 });
 
+// CORE FUNCTIONALITY
+// Get the geocode, either from localStorage or from an API call
 function searchLocation() {
-  // TO DO fix capitalization check
-  console.log("clicked")
   var cityName = $(".searchBar").val().trim();
   $(".searchBar").val("");
 
+  // First check to see if the geocode exists in localStorage, to avoid extra API calls. If it's not in local storage, it'll return false, and go on to the getCoord function
   if (searchFromHistory(cityName)) {
     return;
   } else {
@@ -47,19 +50,20 @@ function searchLocation() {
   }
 }
 
+// Get a geocode from a string of a city's name, via API call
 function getCoord(city) {
   if (city) {
     var requestGeoUrl = new URL("http://api.openweathermap.org/geo/1.0/direct");
     requestGeoUrl.searchParams.append("q", city);
     requestGeoUrl.searchParams.append("appid", APIkey);
 
-    console.log("running coord");
     fetch(requestGeoUrl)
       .then(function (response) {
         if (response.ok){
           response.json().then(function (data) {
             var lat = data[0].lat;
             var lon = data[0].lon;
+            // Add the new search to the search history section and to localStorage
             makeHistoryButton(data[0].name);
             $(".cityName").text(data[0].name)
             var locData = {
@@ -70,43 +74,21 @@ function getCoord(city) {
             };
             searchHistory.unshift(locData);
             localStorage.setItem("searchHistory", JSON.stringify(searchHistory.slice(0,10)));
+            // Get the current weather and five day forecast
             getCurrentForecast(city, lat, lon)
             getWeather(lat, lon);
-            
           });
         }else{
-          alert('Error: ' + response.statusText);
-        }
-         
-      })
-      
-  }
-}
-
-function getWeather(lat, lon) {
-  if (lat && lon) {
-    console.log("running weather");
-    var requestWeatherUrl = new URL(
-      "http://api.openweathermap.org/data/2.5/forecast"
-    );
-    requestWeatherUrl.searchParams.append("lat", lat);
-    requestWeatherUrl.searchParams.append("lon", lon);
-    requestWeatherUrl.searchParams.append("units", "imperial");
-    requestWeatherUrl.searchParams.append("appid", APIkey);
-    fetch(requestWeatherUrl)
-      .then(function (response) {
-        if (response.ok){
-          response.json().then(function (data) {
-            sortData(data.list);
-          });
-        }else {
-          alert('Error: ' + response.statusText);
+          // Alert user if bad request response
+          alert('Error: ' + response.statusText + ". Please check that you've entered a valid city.");
         }
       })
   }
 }
 
+// Get the current weather
 function getCurrentForecast(name, lat, lon){
+  $(".currentWeather").empty()
   if (lat && lon) {
     var currentWeatherUrl = new URL(
       "https://api.openweathermap.org/data/2.5/weather"
@@ -115,22 +97,24 @@ function getCurrentForecast(name, lat, lon){
     currentWeatherUrl.searchParams.append("lon", lon);
     currentWeatherUrl.searchParams.append("units", "imperial");
     currentWeatherUrl.searchParams.append("appid", APIkey);
-    // TO DO handle bad request response
+    
     fetch(currentWeatherUrl)
       .then(function (response) {
         if (response.ok){
           response.json().then(function (data) {
-            console.log(data)
-            var iconURL =
-              "https://openweathermap.org/img/wn/" + data.weather[0].icon + ".png";
+            var iconURL = "https://openweathermap.org/img/wn/" + data.weather[0].icon + ".png";
+            // Dynamically add this section to the currentWeather container in the HTML
             $(".currentWeather").prepend(
-              "<div class='border border-black border-2 rounded'>" +   
-              "<h2>" + name + "</h2>" +
-                "<p class='date card-title'>Date: " + dayjs().format("ddd, MMM D") + "</p>" +
-                "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + data.weather[0].description +"</p>" +
-                "<img class='icon w-25' src=" + iconURL +">" +
-                "<p class='card-text'>Temp: " + data.main.temp + "</p>" +
-                "<p class='card-text'>Humidity: " +data.main.humidity + "%</p>" + "</div> </div>" + "<h3>5 Day Forecast</h3>"
+              "<div class='border border-black border-2 rounded my-2 px-4 pt-4 pb-1'>" +
+              "<h2 class='border-bottom'>" + name + " - " + dayjs().format("ddd, MMM D") + "</h2>" +
+              "<div class='row'>"+
+              "<div class='col'>"+  
+                "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic fs-4'>" + data.weather[0].description +"</p>" +
+                "<img class='icon' src=" + iconURL +">" +
+                "</div>"+
+                "<div class='col'>"+  
+                "<p class='card-text fs-4'>Temp: " + data.main.temp + "</p>" +
+                "<p class='card-text fs-4'>Humidity: " +data.main.humidity + "%</p>" + "</div> </div> </div> </div>" + "<h3>5 Day Forecast</h3>"
             );
           });
         }else{
@@ -140,60 +124,51 @@ function getCurrentForecast(name, lat, lon){
   }
 }
 
-function makeHistoryButton(location) {
-  var historyButton = $("<button class='btn btn-secondary m-1'>" + location + "</button>");
-  $(".searchHistory").prepend(historyButton);
-    // for (var i = searchHistoryButtons.length; i >10; i--){
-    //   searchHistoryButtons[i].remove()
-
-    // }
+// Get five day forecast
+function getWeather(lat, lon) {
+  $(".fiveDayForecast").empty()
+  if (lat && lon) {
+    var requestWeatherUrl = new URL(
+      "http://api.openweathermap.org/data/2.5/forecast"
+    );
+    requestWeatherUrl.searchParams.append("lat", lat);
+    requestWeatherUrl.searchParams.append("lon", lon);
+    requestWeatherUrl.searchParams.append("units", "imperial");
+    requestWeatherUrl.searchParams.append("appid", APIkey);
+    
+    fetch(requestWeatherUrl)
+      .then(function (response) {
+        if (response.ok){
+          response.json().then(function (data) {
+            // Send the response to be sorted into days for easier processing
+            sortData(data.list);
+          });
+        }else {
+          alert('Error: ' + response.statusText);
+        }
+      })
   }
-
-function sortData(forecast) {
-  if (forecast){
-  var today = dayjs().set("hour", 23).set("minute", 59).set("second", 59);
-  var days = [
-    [], //today
-    [], //day + 1
-    [], //day + 2
-    [], //day + 3
-    [], //day + 4
-    [], //day + 5
-  ];
-  for (var i = 0; i < forecast.length; i++) {
-    // convert the unix code to local time
-    var convertDay = dayjs.unix(forecast[i].dt);
-    if (convertDay.$D === today.$D) {
-      days[0].push(forecast[i]);
-    } else {
-      var index = convertDay.diff(today, "day") + 1;
-      days[index].push(forecast[i]);
-    }
-  }
-  console.log(days);
-  presentData(days);
-}
 }
 
+// Calculate the values for the data and dynamically add to the page
 function presentData(days) {
-  // var dayCards = $(".dayCard");
-  var start
-  if (days[0].length >= 4){
-    console.log("today counts as first day")
-    start = 0
-  }else{
-    start = 1
+  // Handles an edge case where, due to time zone difference, in the morning the returned forecast actually includes results for the current day, and it seems more correct to include them than not to.
+  var start;
+  // If there's at leat half a day of entries for today, include it in the five day forecast.
+  if (days[0].length >= 4) {
+    start = 0;
+  } else {
+    start = 1;
   }
-  console.log(start)
-  for (var i =start; i <= start+4; i++) {
-    console.log("for loop running")
-    var date = dayjs.unix(days[i][1].dt).format('ddd, MMM D');
+  // For each of the five days in the forecast, calculate the data
+  for (var i = start; i <= start + 4; i++) {
+    var date = dayjs.unix(days[i][1].dt).format("ddd, MMM D");
     var highTracker = null;
     var lowTracker = null;
     var humidityTracker = null;
     var iconList = [];
     var descriptionList = [];
-
+    // To calculate the data, do the following for each result in that day's forecast
     for (var j = 1; j < days[i].length; j++) {
       // Update high and low temps
       if (days[i][j].main.temp > highTracker || highTracker === null) {
@@ -202,45 +177,81 @@ function presentData(days) {
       if (days[i][j].main.temp < lowTracker || lowTracker === null) {
         lowTracker = days[i][j].main.temp;
       }
-      // Update humidity
+      // Update humidity. Show the user the highest expected humidity value for the day.
       if (
-        days[i][j].main.humidity > humidityTracker ||
-        humidityTracker === null
+        days[i][j].main.humidity > humidityTracker || humidityTracker === null
       ) {
         humidityTracker = days[i][j].main.humidity;
       }
-      // Track icon
+      // Create an array of all the returned weather icons 
       iconList.push(days[i][j].weather[0].icon);
-      // Track weather desciption
+      // TCreate an array of all the returned weather descriptions
       descriptionList.push(days[i][j].weather[0].description);
     }
 
-    var iconURL = "https://openweathermap.org/img/wn/" + getMostFrequent(iconList) + ".png"
+    var iconURL =
+      "https://openweathermap.org/img/wn/" + getMostFrequent(iconList) + ".png";
 
-
-    $(".fiveDayForecast").append("<div class='dayCard day1 card rounded mx-3 p-2 flex-fill'>"+
-                    "<p class='date card-title'>Date: " + date +"</p>"+
-                    "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + getMostFrequent(descriptionList) + "</p>"+
-                    "<img class='icon w-25' src="+ iconURL + ">"+
-                    "<p class='card-text'>Temp High: " + highTracker +"</p>"+
-                    "<p class='card-text'>Temp Low: " + lowTracker +"</p>"+
-                    "<p class='card-text'>Humidity: "+ humidityTracker +"%</p>"+
-                    "</div>")
+    // Dynamically create the card for this day, populate the data, and append to the fiveDayForecast section
+    $(".fiveDayForecast").append(
+      "<div class='text-bg-primary card rounded p-2 flex-fill'>" + "<p class='date card-title'>" + date + "</p>" +
+        "<p class='card-subtitle text-body-secondary text-capitalize fw-lighter fst-italic'>" + getMostFrequent(descriptionList) + "</p>" +
+        "<img class='icon w-25' src=" + iconURL + ">" +
+        "<p class='card-text'>Temp High: " + highTracker + "</p>" +
+        "<p class='card-text'>Temp Low: " + lowTracker + "</p>" +
+        "<p class='card-text'>Humidity: " + humidityTracker + "%</p>" +
+        "</div>"
+    );
   }
 }
+
+// HELPER FUNCTIONS
+// Sort the returned data into days for easier processing
+function sortData(forecast) {
+  if (forecast) {
+    // We'll need to compare against today's midnight to determine where it should be sorted
+    var today = dayjs().set("hour", 23).set("minute", 59).set("second", 59);
+    var days = [
+      [], //today. Due to time difference, the API sometimes returns a value that's actually for today.
+      [], //day + 1
+      [], //day + 2
+      [], //day + 3
+      [], //day + 4
+      [], //day + 5
+    ];
+    for (var i = 0; i < forecast.length; i++) {
+      // Convert the unix code to local time
+      var convertDay = dayjs.unix(forecast[i].dt);
+      if (convertDay.$D === today.$D) {
+        days[0].push(forecast[i]);
+      } else {
+        var index = convertDay.diff(today, "day") + 1;
+        days[index].push(forecast[i]);
+      }
+    }
+    presentData(days);
+  }
+}
+
+// Used with weather icon and weather description. Look at all the values returned and determine which is the most freqent, present it as the overall weather condition for the day.
 function getMostFrequent(list) {
   if (list) {
+    // Track the values and their frequencies in an object
     var freqTracker = {};
     var maxItem;
     var maxCount = 1;
 
     for (var i = 0; i < list.length; i++) {
       var item = list[i];
+      // Check to see if this item already exists as a key in the object
       if (!freqTracker[item]) {
+        // If it doesn't, this is the first instance, so make its value 1
         freqTracker[item] = 1;
       } else {
+        // If it does, increment the value
         freqTracker[item]++;
       }
+      // Check to see if the value is greater than any other value. If so, that item is the most freqent item.
       if (freqTracker[item] > maxCount) {
         maxCount = freqTracker[item];
         maxItem = item;
@@ -250,79 +261,22 @@ function getMostFrequent(list) {
   }
 }
 
+// Create a search history button and add it to the searchHistory section
+function makeHistoryButton(location) {
+  var historyButton = $("<button class='btn btn-secondary m-1'>" + location + "</button>");
+  $(".searchHistory").prepend(historyButton);
+}
+
+// To avoid unnecessary API calls, check to see if the city information already exists in localStorage. Return true or false for controlling the searchLocaiton function flow.
 function searchFromHistory(cityName) {
   if (cityName) {
     for (var i = 0; i < searchHistory.length; i++) {
       if (searchHistory[i].name === cityName) {
         getCurrentForecast(cityName, searchHistory[i].lat, searchHistory[i].lon)
         getWeather(searchHistory[i].lat, searchHistory[i].lon);
-
         return true;
       }
     }
     return false;
   }
 }
-
-
-
-
-// STRETCH GOALS
-// Support city name search with optional state
-// support zip code search
-// Autofill suggestions
-// If rainy, show chance of rain
-// Make search button activate when you press enter
-// If two weather conditions are equally likely, show both?
-
-// LOAD PAGE
-// Check localStorage ✅
-// Populate search history✅
-// Use latest search to get the current weather and the five day forecast. Populate dynamically✅
-
-// If there's no localStorage, show a message like "Search for a city"
-// Hide the forecast area
-
-// USER SEARCHES A CITY✅
-// Sanitize the data✅
-// Check to see if the data is already in the localStorage. If so, you don't have to do the geocoding API call✅
-// Make a call to the Geocoding API to turn a search string into longitude and latitude✅
-// Save the location to localStorage✅
-// Array of objects. Each object should have the place name, state, lat, and long✅
-// Take the longitude and latitude and make another API call to get the weather forecast✅
-// Add city to the search history✅
-// Create a button with the place name. Store lat and long as data attributes to avoid future geocoding API calls✅
-
-// USE A HISTORY BUTTON TO SEARCH✅
-
-// STATS TO DISPLAY✅
-// Date✅
-// Convert UTC with DayJS✅
-// Temp hi✅
-// For loop through temperatures, update if higher✅
-// Temp low✅
-// For loop through temperatures, update if lower✅
-// Weather icon✅
-// Track how many of each kind of weather there is, and show whichever one has the most✅
-// Verbose weather?✅
-// list.weather.description✅
-// Humidity?✅
-// For loop through humidity, update if higher✅
-
-// DISPLAY TO USER✅
-// Calculate each value and assign it to the relevant text field✅
-
-// HANDLE A CASE WHERE THE USER CHECKS AT MIDNIGHT AND TODAY BASICALLY COUNTS AS THE FIRST DAY ✅
-
-// DELETE LONG LIST OF SEARCH HISTORY BUTTONS
-
-// Handle bad response request✅
-
-// Show current forecast✅
-
-// Finish styling
-
-// Cleanup pass
-
-// Readme
-
