@@ -53,7 +53,7 @@ function searchLocation() {
 // Get a geocode from a string of a city's name, via API call
 function getCoord(city) {
   if (city) {
-    var requestGeoUrl = new URL("http://api.openweathermap.org/geo/1.0/direct");
+    var requestGeoUrl = new URL("https://api.openweathermap.org/geo/1.0/direct");
     requestGeoUrl.searchParams.append("q", city);
     requestGeoUrl.searchParams.append("appid", APIkey);
 
@@ -130,7 +130,7 @@ function getWeather(lat, lon) {
   $(".fiveDayForecast").empty()
   if (lat && lon) {
     var requestWeatherUrl = new URL(
-      "http://api.openweathermap.org/data/2.5/forecast"
+      "https://api.openweathermap.org/data/2.5/forecast"
     );
     requestWeatherUrl.searchParams.append("lat", lat);
     requestWeatherUrl.searchParams.append("lon", lon);
